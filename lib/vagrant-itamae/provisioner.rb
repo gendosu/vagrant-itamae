@@ -1,5 +1,3 @@
-require 'itamae'
-
 module VagrantPlugins
   module Itamae
     class Provisioner < Vagrant.plugin('2', :provisioner)
@@ -15,8 +13,19 @@ module VagrantPlugins
           key:  @machine.ssh_info[:private_key_path][0]
         }
 
-        ::Itamae.logger.level = config.log_level
-        ::Itamae::Runner.run(config.recipes, :ssh, options)
+        option_params = []
+        option_params << "--node_json=#{options[:node_json]}" if options[:node_json]
+        option_params << "--node_yaml=#{options[:node_yaml]}" if options[:node_yaml]
+        option_params << '--sudo' if options[:sudo]
+        option_params << "--shell=#{options[:shell]}" if options[:shell]
+        option_params << "--user=#{options[:user]}"
+        option_params << "--host=#{options[:host]}"
+        option_params << "--port=#{options[:port]}"
+        option_params << "--key=#{options[:key]}"
+
+        config.recipes.each do |recipe|
+          system("itamae ssh --vagrant #{option_params.join(' ')} #{recipe}")
+        end
       end
     end
   end
